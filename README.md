@@ -1,2 +1,2 @@
-# sbt-api-deployer
+# sbt-service-deployer
 

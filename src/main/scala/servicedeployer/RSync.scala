@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package apideployer
+package servicedeployer
 
 import java.io.File
 import org.slf4s.Logging

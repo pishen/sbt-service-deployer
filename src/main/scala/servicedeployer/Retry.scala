@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package apideployer
+package servicedeployer
 
 import scala.util.{ Failure, Success, Try }
 

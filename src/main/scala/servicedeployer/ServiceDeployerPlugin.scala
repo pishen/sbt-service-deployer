@@ -12,24 +12,20 @@
  * limitations under the License.
  */
 
-package apideployer
+package servicedeployer
 
 import sbt._
 import sbt.Keys._
-import sbtassembly.AssemblyKeys._
 import com.vast.sbtlogger.SbtLogger._
-import sbtassembly.AssemblyPlugin
 import scala.util.{ Failure, Success, Try }
 
-object APIDeployerPlugin extends AutoPlugin {
+object ServiceDeployerPlugin extends AutoPlugin {
   object autoImport {
     lazy val Staging = config("staging") extend (Compile)
     lazy val Production = config("production") extend (Compile)
 
     lazy val servers = settingKey[Seq[String]]("servers' ip")
     lazy val user = settingKey[String]("user name")
-    lazy val elbName = settingKey[String]("elb's name")
-    lazy val elbRegion = settingKey[String]("elb's region")
 
     lazy val deploy = taskKey[Unit]("Deploy the code.")
   }
@@ -37,7 +33,7 @@ object APIDeployerPlugin extends AutoPlugin {
   override def trigger = allRequirements
   override def requires = AssemblyPlugin
 
-  lazy val baseAPIDeployerSettings = Seq(
+  lazy val baseServiceDeployerSettings = Seq(
     deploy := {
       val log = streams.value.log
       withLogger(log) {
@@ -71,16 +67,5 @@ object APIDeployerPlugin extends AutoPlugin {
     }
   )
 
-  override lazy val projectSettings =
-    inConfig(Production) {
-      AssemblyPlugin.baseAssemblySettings ++ baseAPIDeployerSettings ++ Seq(
-        fullClasspath in assembly += baseDirectory.value / "production",
-        assemblyOption in assembly := (assemblyOption in assembly).value.copy(cacheOutput = false)
-      )
-    } ++ inConfig(Staging) {
-      AssemblyPlugin.baseAssemblySettings ++ baseAPIDeployerSettings ++ Seq(
-        fullClasspath in assembly += baseDirectory.value / "staging",
-        assemblyOption in assembly := (assemblyOption in assembly).value.copy(cacheOutput = false)
-      )
-    } :+ (assemblyOption in assembly := (assemblyOption in assembly).value.copy(cacheOutput = false))
+  override lazy val projectSettings = ???
 }
