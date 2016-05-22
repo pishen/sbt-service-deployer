@@ -24,48 +24,50 @@ object ServiceDeployerPlugin extends AutoPlugin {
     lazy val Staging = config("staging") extend (Compile)
     lazy val Production = config("production") extend (Compile)
 
-    lazy val servers = settingKey[Seq[String]]("servers' ip")
-    lazy val user = settingKey[String]("user name")
+    lazy val deployServers = settingKey[Seq[String]]("servers' ip")
+    lazy val deployUser = settingKey[String]("user name")
+    lazy val deployFile = settingKey[File]("deploy file")
+    lazy val deployCommand = settingKey[String]("command to start the service")
 
     lazy val deploy = taskKey[Unit]("Deploy the code.")
   }
   import autoImport._
   override def trigger = allRequirements
-  override def requires = AssemblyPlugin
 
   lazy val baseServiceDeployerSettings = Seq(
     deploy := {
       val log = streams.value.log
       withLogger(log) {
-        val jar = assembly.value
-        val fallbackedServers = servers.?.value.getOrElse(ELBHelper.getServersUnderELB(elbName.value, elbRegion.value))
-        fallbackedServers.foreach { server =>
+        val file = deployFile.value
+        deployServers.value.foreach { server =>
           log.info(s"Deploying to server $server")
-          val ssh = SSH(user.value, server)
-          if(ssh.copy(command = "ls").run.contains("RUNNING_PID")){
-            val pid = ssh.copy(command = "cat RUNNING_PID").run
+          val ssh = SSH(deployUser.value, server)
+          if(ssh.withCommand("ls").run.contains("running.pid")){
+            val pid = ssh.withCommand("cat running.pid").run
             log.info(s"killing old process $pid")
             //kill the process
-            ssh.copy(command = "kill `cat RUNNING_PID`").run
+            ssh.withCommand("kill `cat running.pid`").run
             //check if the process is stopped, and clean up
             Retry(){ _ =>
-              Try(ssh.copy(command = s"kill -0 $pid").run) match {
+              Try(ssh.withCommand(s"kill -0 $pid").run) match {
                 case Success(_) =>
                   throw new RuntimeException("process still exists")
                 case Failure(_) =>
                   log.info("process killed")
-                  ssh.copy(command = "rm RUNNING_PID").run
+                  ssh.withCommand("rm running.pid").run
               }
             }
           }
           //upload jar
-          RSync(jar, user.value, server, s"~/${jar.getName}").sync()
+          RSync(file, deployUser.value, server, s"~/${file.getName}").run()
           //start the jar
-          ssh.copy(command = s"nohup java -jar ${jar.getName} > logfile 2>&1 & echo $$! > RUNNING_PID").run
+          ssh.withCommand(s"nohup ${deployCommand.value} > running.log 2>&1 & echo $$! > running.pid").run
         }
       }
     }
   )
 
-  override lazy val projectSettings = ???
+  override lazy val projectSettings =
+    inConfig(Production)(baseServiceDeployerSettings) ++
+      inConfig(Staging)(baseServiceDeployerSettings)
 }

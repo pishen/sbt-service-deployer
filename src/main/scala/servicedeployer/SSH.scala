@@ -25,6 +25,8 @@ case class SSH(
   keyFile: String = null,
   pty: Boolean = false
 ) extends Logging {
+  def withCommand(command: String) = this.copy(command = command)
+  
   val fullCommand = Seq(
     "ssh",
     "-o", "UserKnownHostsFile=/dev/null",

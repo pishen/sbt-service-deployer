@@ -25,7 +25,7 @@ case class RSync(
   targetPath: String,
   keyFile: String = null
 ) extends Logging {
-  def sync() = {
+  def run() = {
     val sshCommand = Seq(
       "ssh",
       "-o", "UserKnownHostsFile=/dev/null",
