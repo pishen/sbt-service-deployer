@@ -26,8 +26,8 @@ object ServiceDeployerPlugin extends AutoPlugin {
 
     lazy val deployServers = settingKey[Seq[String]]("servers' ip")
     lazy val deployUser = settingKey[String]("user name")
-    lazy val deployFile = settingKey[File]("deploy file")
-    lazy val deployCommand = settingKey[String]("command to start the service")
+    lazy val deployFile = taskKey[File]("deploy file")
+    lazy val deployCommand = taskKey[String]("command to start the service")
 
     lazy val deploy = taskKey[Unit]("Deploy the code.")
   }
